@@ -1,6 +1,13 @@
-import '@/styles/globals.css'
-import type { AppProps } from 'next/app'
+import "@/styles/globals.css";
+import type { AppProps } from "next/app";
+import { AirlineProvider } from "../../constants/AirlineContext";
 
-export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
-}
+const Airlines = ({ Component, pageProps }: AppProps) => {
+  return (
+    <AirlineProvider>
+      <Component {...pageProps} />
+    </AirlineProvider>
+  );
+};
+
+export default Airlines;

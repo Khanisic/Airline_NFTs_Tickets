@@ -10,14 +10,29 @@
   },
   "dependencies": {
     "@next/font": "13.1.6",
+    "@nextui-org/react": "^1.0.0-beta.12",
+    "@splinetool/react-spline": "^2.2.5",
     "@types/node": "18.14.1",
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",
+    "axios": "^1.3.4",
     "eslint": "8.34.0",
     "eslint-config-next": "13.1.6",
+    "ethers": "^5.7.2",
+    "get-image-colors": "^4.0.1",
+    "html2canvas": "^1.4.1",
+    "moment": "^2.29.4",
     "next": "13.1.6",
+    "nft.storage": "^7.0.3",
+    "node-vibrant": "^3.2.1-alpha.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-input-slider": "^6.0.1",
     "typescript": "4.9.5"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.2.7"
   }
 }

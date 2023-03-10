@@ -4,7 +4,7 @@ import icons from '../components/icons'
 import getColors from 'get-image-colors';
 import { getRelativeLuminance, hexToRGB } from '../../utils';
 import { ethers } from "ethers";
-import Link from 'next/Link'
+import Link from 'next/link';
 function Ticket({ data }) {
 
     const [myTicket, setMyTicket] = useState(true)

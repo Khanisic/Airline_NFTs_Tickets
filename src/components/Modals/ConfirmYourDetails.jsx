@@ -3,7 +3,7 @@ import moment from "moment"
 import { minutesToHours } from '../../../utils'
 import { terms } from '../../data/terms'
 import { Checkbox } from "@nextui-org/react";
-import { ethers } from "ethers";
+
 function ConfirmYourDetails({ tripDetails, check, setCheck }) {
     return (
         <div className='flex flex-col gap-6 w-full pt-5'>

@@ -12,13 +12,11 @@ function ViewTickets({ mintStart, setMintStart, tripDetails, details }) {
 
 
     const [isCapturing, setIsCapturing] = useState(false)
-    const { currentPath, setCurrentPath, uris, setUris } = useContext(AirlineContext);
+    const { currentPath, setCurrentPath, uris, setUris, setMintingStatusMessage, mintingStatusMessage } = useContext(AirlineContext);
 
     useEffect(() => {
-        console.log("Here")
-        // put up screen
         if(mintStart){
-            console.log(mintStart)
+            setMintingStatusMessage( [...mintingStatusMessage, "Capturing tickets 📷 "])
             setCurrentPath(0)
             startMintingNFTs();
         }
@@ -26,7 +24,6 @@ function ViewTickets({ mintStart, setMintStart, tripDetails, details }) {
     }, [mintStart])
 
     const startMintingNFTs = async () => {
-        console.log("Here")
         setIsCapturing(true)
         setCurrentPath(0)
     }

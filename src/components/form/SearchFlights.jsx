@@ -93,18 +93,10 @@ function SearchFlights() {
             }
           </div>
         }
-        <InputField
-          label={"One Way"}
-          type={"checkbox"}
-          value={oneWay}
-          setValue={setOneWay}
-        />
+
         <div className='flex justify-start gap-2'>
           <InputField value={departure} setValue={setDeparture} type="date" label={"Departure"} />
-          {
-            !oneWay &&
-            <InputField value={returnDate} setValue={setReturnDate} type="date" label={"Return"} />
-          }
+
         </div>
         <div className='flex px-2 gap-2 justify-center'>
           <InputField label={'Adults'} value={adults} setValue={setAdults} type="counter" />

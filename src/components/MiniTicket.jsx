@@ -9,7 +9,7 @@ import { AirlineContext } from '../../constants/AirlineContext';
 const NFT_STORAGE_TOKEN = process.env.NEXT_PUBLIC_NFT_STORAGE_TOKEN
 const client = new NFTStorage({ token: NFT_STORAGE_TOKEN });
 
-function MiniTicket({ uris, path, setIsCapturing, setUris, isCapturing, currentPath, details, noOfTickets, setCurrentPath }) {
+function MiniTicket({ uris, path, setIsCapturing, setUris, isCapturing, currentPath, details, noOfTickets, setCurrentPath, setMintingStatusMessage, mintingStatusMessage, }) {
 
     const [hexValues, setHexValues] = useState()
     const [white, setWhite] = useState(false)

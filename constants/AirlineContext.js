@@ -7,12 +7,14 @@ import { NFTStorage, Blob } from "nft.storage";
 import { useRouter } from "next/router";
 const NFT_STORAGE_TOKEN = process.env.NEXT_PUBLIC_NFT_STORAGE_TOKEN;
 const client = new NFTStorage({ token: NFT_STORAGE_TOKEN });
-const fetchContract = (signerOrProvider) =>
-  new ethers.Contract(ContractAddress, ABI, signerOrProvider);
+// const fetchContract = (signerOrProvider) =>
+//   new ethers.Contract(ContractAddress, ABI, signerOrProvider);
 
 export const AirlineContext = React.createContext();
 
 export const AirlineProvider = ({ children }) => {
+  const [currentAccount, setCurrentAccount] = useState("");
+  const [mintingStatusMessage, setMintingStatusMessage] = useState([]);
   const [finalURIs, setFinalURIs] = useState([]);
   const [currentPath, setCurrentPath] = useState(0);
   const [uris, setUris] = useState([]);
@@ -33,6 +35,10 @@ export const AirlineProvider = ({ children }) => {
     noOfTickets,
     setIsCapturing
   ) => {
+    setMintingStatusMessage([
+      ...mintingStatusMessage,
+      `Capturing ticket 🎟️ ${currentPath + 1} of ${noOfTickets}`,
+    ]);
     const divToCapture = divRef.current;
     let imgUrl = "";
     html2canvas(divToCapture).then((canvas) => {
@@ -44,6 +50,10 @@ export const AirlineProvider = ({ children }) => {
           setScale("scale-100");
           setIsCapturing(false);
           setCapturingDone(true);
+          setMintingStatusMessage([
+            ...mintingStatusMessage,
+            `Capturing tickets done ✅`,
+          ]);
         } else {
           setCurrentPath((prevPath) => prevPath + 1);
         }
@@ -81,47 +91,60 @@ export const AirlineProvider = ({ children }) => {
 
   const fetchNFTs = async (setLoading) => {
     setLoading(true);
+
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
-    const contract = fetchContract(provider);
-
+    const contract = new ethers.Contract(ContractAddress, ABI, signer);
     const data = await contract.fetchMyNFTs();
-    return data;
-    // const items = await Promise.all(
-    //   data.map(async ({ tokenId, seller, owner, price: unformattedPrice }) => {
-    //     const tokenURI = await contract.tokenURI(tokenId);
-    //     const {
-    //       data: { image, name, description },
-    //     } = await axios.get(tokenURI);
-    //     const price = ethers.utils.formatUnits(
-    //       unformattedPrice.toString(),
-    //       "ether"
-    //     );
 
-    //     image.replace("https:ipfs.io", "https://infura-ipfs.io");
-    //     console.log(image);
-
-    //     return {
-    //       price,
-    //       tokenId: tokenId.toNumber(),
-    //       seller,
-    //       owner,
-    //       image,
-    //       name,
-    //       description,
-    //       tokenURI,
-    //     };
-    //   })
-    // );
-    // return items;
+    const items = await Promise.all(
+      data.map(async ({ uri, price, tokenId }) => {
+        const {
+          data: {
+            image,
+            name,
+            description,
+            airlineCode,
+            departureAirportCode,
+            departureDateTime,
+            arrivalAirportCode,
+            arrivalDateTime,
+            gender,
+            flight,
+          },
+        } = await axios.get(uri);
+        image.replace("https://nftstorage.link/", "https://infura-ipfs.io/");
+console.log(data)
+        return {
+          price,
+          airlineCode,
+          departureAirportCode,
+          departureDateTime,
+          image,
+          name,
+          description,
+          arrivalAirportCode,
+          arrivalDateTime,
+          gender,
+          flight,
+          tokenId
+        };
+      })
+    );
+    setLoading(false);
+    return items;
   };
 
   useEffect(() => {
     if (tripDetails && tripDetails.paths.length == uris.length) {
+      setMintingStatusMessage([
+        ...mintingStatusMessage,
+        `Creating metadata of each ticket 🎫 `,
+      ]);
       createNFT();
     }
   }, [uris]);
-  console.log(tripDetails);
+
   const createNFT = async () => {
     let innerURIs = [];
     for (let i = 0; i < uris.length; i++) {
@@ -134,9 +157,15 @@ export const AirlineProvider = ({ children }) => {
         arrivalAirportCode: tripDetails.paths[i].arrivalAirportCode,
         departureDateTime: tripDetails.paths[i].departureDateTime,
         arrivalDateTime: tripDetails.paths[i].arrivalDateTime,
+        flight: tripDetails.paths[i].designatorCode,
+        gender: details.gender,
       });
 
       try {
+        setMintingStatusMessage([
+          ...mintingStatusMessage,
+          `Uploaded ticket ${i + 1}/${uris.length} to IPFS 🖼️⛓️  `,
+        ]);
         console.log(i, uris.length);
         let metadata = new Blob([data]);
         let cid = await client.storeBlob(metadata);
@@ -147,40 +176,44 @@ export const AirlineProvider = ({ children }) => {
         console.log("Error uploading to create nft");
       }
     }
+    setMintingStatusMessage([
+      ...mintingStatusMessage,
+      `Uploaded ${innerURIs.length} tickets to IPFS ✅ `,
+    ]);
     setFinalURIs(innerURIs);
   };
 
   const recover = async () => {
-    //   const voucher = { api: "abcabc" };
-    //   const types = {
-    //     AirlineNFTVoucher: [{ name: "api", type: "string" }],
-    //   };
-    //   try {
-    //     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    //     const signer = provider.getSigner();
-    //     const signature = await signer._signTypedData(domain, types, voucher);
-    //     const contract = new ethers.Contract(ContractAddress, ABI, signer);
-    //     const create = await contract.recover({
-    //       ...voucher,
-    //       signature,
-    //     });
-    //     console.log(create);
-    //     console.log({
-    //       ...voucher,
-    //       signature,
-    //     });
-    //     return {
-    //       ...voucher,
-    //       signature,
-    //     };
-    //   } catch (err) {
-    //     console.log(err);
-    //   }
+    const voucher = { api: "abcabc" };
+    const types = {
+      AirlineNFTVoucher: [{ name: "api", type: "string" }],
+    };
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const signature = await signer._signTypedData(domain, types, voucher);
+      const contract = new ethers.Contract(ContractAddress, ABI, signer);
+      const create = await contract.recover({
+        ...voucher,
+        signature,
+      });
+      console.log(create);
+      console.log({
+        ...voucher,
+        signature,
+      });
+      return {
+        ...voucher,
+        signature,
+      };
+    } catch (err) {
+      console.log(err);
+    }
     // try {
     //   const provider = new ethers.providers.Web3Provider(window.ethereum);
     //   const signer = provider.getSigner();
-    //
-    //   const create = await contract.tokenURI(1);
+    //   const contract = new ethers.Contract(ContractAddress, ABI, signer);
+    //   const create = await contract.tokenURI(2);
     //   console.log(create);
     // } catch (err) {
     //   console.log(err);
@@ -188,28 +221,38 @@ export const AirlineProvider = ({ children }) => {
   };
 
   const mintNFT = async () => {
-    console.log(finalURIs.length, tripDetails && tripDetails.paths.length);
     if (tripDetails && finalURIs.length == tripDetails.paths.length) {
-      console.log("Last step, minting");
-      console.log(finalURIs);
+      setMintingStatusMessage([
+        ...mintingStatusMessage,
+        `Sending mint request to contract 🖋️  `,
+      ]);
       const nft = {
         price: ethers.utils
           .parseUnits((tripDetails.price / 100000).toString(), "ether")
           .toString(),
         uri: finalURIs,
-        buyer: "0x2bc347a4d3248be7FA4AD63872E3aE3F420aADa7",
+        buyer: currentAccount,
       };
       try {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
         const contract = new ethers.Contract(ContractAddress, ABI, signer);
+        setMintingStatusMessage([
+          ...mintingStatusMessage,
+          `Waiting for approval 🔃  `,
+        ]);
         const create = await contract.safeMint(voucher, nft, {
           value: ethers.utils
             .parseUnits((tripDetails.price / 100000).toString(), "ether")
             .toString(),
         });
         await create.wait();
-        router.push("/");
+        setMintingStatusMessage([
+          ...mintingStatusMessage,
+          `Tickets minted ✅  `,
+        ]);
+        setFinalURIs([])
+        router.push("/my-tickets");
         return create;
       } catch (error) {
         console.log(error);
@@ -221,32 +264,33 @@ export const AirlineProvider = ({ children }) => {
     mintNFT();
   }, [finalURIs]);
 
-  //   const connectWallet = async () => {
-  //     if (!window.ethereum) return alert('Please install MetaMask.');
+  const connectWallet = async () => {
+    if (!window.ethereum) return alert("Please install MetaMask.");
 
-  //     const accounts = await window.ethereum.request({
-  //       method: 'eth_requestAccounts',
-  //     });
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
 
-  //     setCurrentAccount(accounts[0]);
-  //     window.location.reload();
-  //   };
+    setCurrentAccount(accounts[0]);
+    window.location.reload();
+  };
 
-  //   const checkIfWalletIsConnect = async () => {
-  //     if (!window.ethereum) return alert('Please install MetaMask.');
 
-  //     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+  const checkIfWalletIsConnect = async () => {
+    if (!window.ethereum) return alert("Please install MetaMask.");
 
-  //     if (accounts.length) {
-  //       setCurrentAccount(accounts[0]);
-  //     } else {
-  //       console.log('No accounts found');
-  //     }
-  //   };
+    const accounts = await window.ethereum.request({ method: "eth_accounts" });
 
-  //   useEffect(() => {
-  //     checkIfWalletIsConnect();
-  //   }, []);
+    if (accounts.length) {
+      setCurrentAccount(accounts[0]);
+    } else {
+      console.log("No accounts found");
+      connectWallet();
+    }
+  };
+  useEffect(() => {
+    checkIfWalletIsConnect();
+  }, []);
 
   const test = "Abd";
 
@@ -268,6 +312,8 @@ export const AirlineProvider = ({ children }) => {
         createNFT,
         recover,
         fetchNFTs,
+        mintingStatusMessage,
+        setMintingStatusMessage,
       }}
     >
       {children}

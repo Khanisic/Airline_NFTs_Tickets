@@ -1,4 +1,4 @@
-import resp from "../src/data/second.json";
+import resp from "../src/data/test.json";
 
 var res;
 res = resp;
